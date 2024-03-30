@@ -1,4 +1,9 @@
 import os
+import pickle
+import numpy as np
+
+model=pickle.load(open('licence-model.pkl','rb'))
+
 
 from flask import (Flask, redirect, render_template, request,
                    send_from_directory, url_for)
@@ -26,6 +31,16 @@ def hello():
    else:
        print('Request for hello page received with no name or blank name -- redirecting')
        return redirect(url_for('index'))
+   
+@app.route('/predict', methods=['POST'])
+def predict_forest():
+    oxygen = request.form.get('oxygen')
+    humidity = request.form.get('humidity')
+    #temperature = request.form.get('temperature')
+    input=np.array([[oxygen,humidity]]).astype(np.float64)
+    prediction=model.predict_proba(input)
+    pred='{0:.{1}f}'.format(prediction[0][0], 2)
+    return float(pred)
 
 
 if __name__ == '__main__':

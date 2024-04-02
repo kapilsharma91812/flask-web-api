@@ -2,13 +2,20 @@ import os
 import pickle
 import numpy as np
 
+
 model=pickle.load(open('licence-model.pkl','rb'))
+sc=pickle.load(open('scalermodel.pkl','rb'))
+
 
 
 from flask import (Flask, redirect, render_template, request,
                    send_from_directory, url_for)
 
 app = Flask(__name__)
+app.debug = True
+    # Run the Flask application on port 5001
+#app.run(port=8080)
+
 
 
 @app.route('/')
@@ -34,13 +41,19 @@ def hello():
    
 @app.route('/predict', methods=['POST'])
 def predict_forest():
-    oxygen = request.form.get('oxygen')
-    humidity = request.form.get('humidity')
-    #temperature = request.form.get('temperature')
-    input=np.array([[oxygen,humidity]]).astype(np.float64)
-    prediction=model.predict_proba(input)
-    pred='{0:.{1}f}'.format(prediction[0][0], 2)
-    return float(pred)
+   
+    input_data = request.form.to_dict()
+
+    # Convert input data to a list of values
+    input_values = [float(value) for value in input_data.values()]
+
+    # Convert the list of values into a NumPy array
+    input_array = np.array(input_values).reshape(1, -1)
+
+    # Use the model and scaler to make predictions
+    prediction = model.predict_proba(sc.transform(input_array))
+
+    return str(prediction)
 
 
 if __name__ == '__main__':
